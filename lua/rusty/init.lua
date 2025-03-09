@@ -10,8 +10,8 @@ M.open_floating_window = function()
     -- Set window size based on the editor's dimensions
     local width = math.floor(vim.o.columns * 0.3)
     local height = math.floor(vim.o.lines * 0.3)
-    local row = math.floor((vim.o.lines - height) / 2)
-    local col = math.floor((vim.o.columns - width) / 2)
+    local row = math.floor((vim.o.lines - height))
+    local col = math.floor((vim.o.columns - width))
 
     -- Define window options
     local opts = {
