@@ -1,5 +1,5 @@
 local M = {}
-
+local win
 M.open_floating_window = function()
     -- Create a buffer
     local buf = vim.api.nvim_create_buf(false, true)
@@ -26,6 +26,14 @@ M.open_floating_window = function()
 
     -- Set some content in the floating window
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "Hello, Neovim Floating Window!" })
+
 end
+
+M.close_floating_window = function()
+    if win and vim.api.nvim_win_is_valid(win) then
+        vim.api.nvim_win_close(win, true)
+        win = nil     end
+end
+
 
 return M
