@@ -1,0 +1,3 @@
+# Rusty
+
+a neovim plugin
