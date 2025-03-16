@@ -1,24 +1,57 @@
-
-use std::io::{self, Read, Write};
+use std::io::{self, BufRead, Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use std::thread;
 
-/// Starts the server and listens for connections
 pub fn start_server() -> io::Result<()> {
     let listener = TcpListener::bind("127.0.0.1:8080")?;
-    println!("Server running on 127.0.0.1:8080 \n Press Ctrl+c to exit server");
+    println!("Server running on 127.0.0.1:8080");
 
+    let running = Arc::new(AtomicBool::new(true));
+    let running_clone = Arc::clone(&running);
+
+    // Thread for handling admin commands
+    thread::spawn(move || {
+        let stdin = io::stdin();
+        for line in stdin.lock().lines() {
+            match line.unwrap().trim() {
+                "exit" => {
+                    println!("Shutting down server...");
+                    running_clone.store(false, Ordering::SeqCst);
+                    std::process::exit(0);
+                }
+                "status" => {
+                    println!("Server is running and accepting connections.");
+                }
+                "help" => {
+                    println!("Available commands:");
+                    println!("  exit   - Shut down the server");
+                    println!("  status - Show server status");
+                    println!("  help   - List available commands");
+                }
+                command => println!("Unknown command: '{}'. Type 'help' for a list of commands.", command),
+            }
+        }
+    });
+
+    // Main loop for accepting connections
     for stream in listener.incoming() {
+        if !running.load(Ordering::SeqCst) {
+            break;
+        }
+
         match stream {
             Ok(mut stream) => {
                 println!("Client connected: {}", stream.peer_addr()?);
-                handle_client(&mut stream)?;
+                if let Err(e) = handle_client(&mut stream) {
+                    eprintln!("Error handling client: {}", e);
+                }
             }
-            Err(e) => {
-                eprintln!("Connection failed: {}", e);
-            }
+            Err(e) => eprintln!("Connection failed: {}", e),
         }
     }
 
+    println!("Server stopped.");
     Ok(())
 }
 
