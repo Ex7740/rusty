@@ -1,10 +1,11 @@
+
 use std::io::{self, Read, Write};
 use std::net::{TcpListener, TcpStream};
 
 /// Starts the server and listens for connections
 pub fn start_server() -> io::Result<()> {
     let listener = TcpListener::bind("127.0.0.1:8080")?;
-    println!("Server running on 127.0.0.1:8080");
+    println!("Server running on 127.0.0.1:8080 \n Press Ctrl+c to exit server");
 
     for stream in listener.incoming() {
         match stream {
@@ -32,3 +33,4 @@ fn handle_client(stream: &mut TcpStream) -> io::Result<()> {
     stream.write_all(b"Message received")?;
     Ok(())
 }
+
