@@ -1,3 +1,4 @@
+
 use std::io::{self, BufRead, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
@@ -43,9 +44,11 @@ pub fn start_server() -> io::Result<()> {
         match stream {
             Ok(mut stream) => {
                 println!("Client connected: {}", stream.peer_addr()?);
-                if let Err(e) = handle_client(&mut stream) {
-                    eprintln!("Error handling client: {}", e);
-                }
+                thread::spawn(move || {
+                    if let Err(e) = handle_client(&mut stream) {
+                        eprintln!("Error handling client: {}", e);
+                    }
+                });
             }
             Err(e) => eprintln!("Connection failed: {}", e),
         }
@@ -57,13 +60,16 @@ pub fn start_server() -> io::Result<()> {
 
 fn handle_client(stream: &mut TcpStream) -> io::Result<()> {
     let mut buffer = [0; 512];
-    let bytes_read = stream.read(&mut buffer)?;
-    if bytes_read == 0 {
-        return Ok(());
-    }
+    loop {
+        let bytes_read = stream.read(&mut buffer)?;
+        if bytes_read == 0 {
+            println!("Client disconnected");
+            break;
+        }
 
-    println!("Received: {}", String::from_utf8_lossy(&buffer[..bytes_read]));
-    stream.write_all(b"Message received")?;
+        println!("Received: {}", String::from_utf8_lossy(&buffer[..bytes_read]));
+        stream.write_all(b"Message received")?;
+    }
     Ok(())
 }
 

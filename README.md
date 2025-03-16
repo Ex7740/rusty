@@ -4,5 +4,6 @@ A communication server
 
 # Next steps
 
-- Add connection from any device
+- add username for multi-client connections
+- Multi platform????
 
