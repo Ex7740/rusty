@@ -4,8 +4,8 @@ use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 use std::thread;
 
 pub fn start_server() -> io::Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:8080")?;
-    println!("Server running on 127.0.0.1:8080");
+    let listener = TcpListener::bind("192.168.1.52:8080")?;
+    println!("Server running on 192.168.1.52:8080");
 
     let running = Arc::new(AtomicBool::new(true));
     let running_clone = Arc::clone(&running);
