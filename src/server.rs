@@ -1,12 +1,19 @@
-
 use std::io::{self, BufRead, Read, Write};
-use std::net::{TcpListener, TcpStream};
+use std::net::{TcpListener, TcpStream, UdpSocket};
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 use std::thread;
 
+fn get_local_ip() -> io::Result<String> {
+    let socket = UdpSocket::bind("0.0.0.0:0")?;
+    socket.connect("8.8.8.8:80")?;
+    Ok(socket.local_addr()?.ip().to_string())
+}
+
 pub fn start_server() -> io::Result<()> {
-    let listener = TcpListener::bind("192.168.1.52:8080")?;
-    println!("Server running on 192.168.1.52:8080");
+    let local_ip = get_local_ip()?;
+    let address = format!("{}:8080", local_ip);
+    let listener = TcpListener::bind(&address)?;
+    println!("Server running on {}", address);
 
     let running = Arc::new(AtomicBool::new(true));
     let running_clone = Arc::clone(&running);
@@ -63,7 +70,6 @@ fn handle_client(stream: &mut TcpStream) -> io::Result<()> {
     loop {
         let bytes_read = stream.read(&mut buffer)?;
         if bytes_read == 0 {
-            println!("Client disconnected");
             break;
         }
 
