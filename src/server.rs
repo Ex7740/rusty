@@ -2,6 +2,7 @@ use std::io::{self, BufRead, Read, Write};
 use std::net::{TcpListener, TcpStream, UdpSocket};
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 use std::thread;
+use std::io::ErrorKind;
 
 fn get_local_ip() -> io::Result<String> {
     let socket = UdpSocket::bind("0.0.0.0:0")?;
@@ -53,7 +54,11 @@ pub fn start_server() -> io::Result<()> {
                 println!("Client connected: {}", stream.peer_addr()?);
                 thread::spawn(move || {
                     if let Err(e) = handle_client(&mut stream) {
-                        eprintln!("Error handling client: {}", e);
+                        if e.kind() != ErrorKind::ConnectionReset {
+                            eprintln!("Error handling client: {}", e);
+                        } else {
+                            println!("Client disconnected gracefully.");
+                        }
                     }
                 });
             }
@@ -68,13 +73,15 @@ pub fn start_server() -> io::Result<()> {
 fn handle_client(stream: &mut TcpStream) -> io::Result<()> {
     let mut buffer = [0; 512];
     loop {
-        let bytes_read = stream.read(&mut buffer)?;
-        if bytes_read == 0 {
-            break;
+        match stream.read(&mut buffer) {
+            Ok(0) => break, // Client disconnected
+            Ok(bytes_read) => {
+                println!("Received: {}", String::from_utf8_lossy(&buffer[..bytes_read]));
+                stream.write_all(b"Message received")?;
+            }
+            Err(e) if e.kind() == ErrorKind::ConnectionReset => break, // Handle client disconnection
+            Err(e) => return Err(e),
         }
-
-        println!("Received: {}", String::from_utf8_lossy(&buffer[..bytes_read]));
-        stream.write_all(b"Message received")?;
     }
     Ok(())
 }
