@@ -2,6 +2,8 @@ mod client;
 mod server;
 
 use clap::{Parser, Subcommand};
+use std::process::Command;
+use std::fs;
 
 /// Rusty CLI Tool
 #[derive(Parser)]
@@ -25,6 +27,8 @@ enum Commands {
         #[command(subcommand)]
         subcommand: ServerCommands,
     },
+    /// Update and install the application
+    Update,
 }
 
 #[derive(Subcommand)]
@@ -60,6 +64,37 @@ fn main() {
                 }
             }
         },
+        Commands::Update => {
+            let build_status = Command::new("cargo")
+                .args(&["build", "--release"])
+                .status()
+                .expect("Failed to build the project");
+
+            if build_status.success() {
+                println!("Build successful. Moving executable to Program Files.");
+
+                let exe_source = "target/release/rusty.exe";
+                let exe_destination = "C:/Program Files/rusty/rusty.exe";
+
+                if let Err(e) = fs::create_dir_all("C:/Program Files/rusty") {
+                    eprintln!("Failed to create destination directory: {}", e);
+                }
+
+                if let Err(e) = fs::copy(exe_source, exe_destination) {
+                    eprintln!("Failed to move executable: {}", e);
+                } else {
+                    println!("Executable moved successfully.");
+
+                    if let Err(e) = fs::remove_dir_all("target") {
+                        eprintln!("Failed to delete target folder: {}", e);
+                    } else {
+                        println!("Target folder deleted successfully.");
+                    }
+                }
+            } else {
+                eprintln!("Build failed.");
+            }
+        }
     }
 }
 
