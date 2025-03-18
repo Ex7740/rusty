@@ -18,6 +18,14 @@ pub fn connect_to_server(address: &str) -> io::Result<()> {
     }).expect("Error setting Ctrl-C handler");
 
     let stdin = io::stdin();
+    
+    // Prompt for username
+    let mut username = String::new();
+    print!("Enter your username: ");
+    io::stdout().flush()?;
+    stdin.read_line(&mut username)?;
+    let username = username.trim().to_string();
+    
     while running.load(Ordering::SeqCst) {
         let mut message = String::new();
         println!("Enter your message:");
@@ -27,8 +35,9 @@ pub fn connect_to_server(address: &str) -> io::Result<()> {
         }
         let message = message.trim();
         
-        stream.write_all(message.as_bytes())?;
-        println!("Message sent: {}", message);
+        let formatted_message = format!("{}: {}", username, message);
+        stream.write_all(formatted_message.as_bytes())?;
+        println!("Message sent: {}", formatted_message);
     }
 
     Ok(())

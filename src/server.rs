@@ -76,7 +76,8 @@ fn handle_client(stream: &mut TcpStream) -> io::Result<()> {
         match stream.read(&mut buffer) {
             Ok(0) => break, // Client disconnected
             Ok(bytes_read) => {
-                println!("Received: {}", String::from_utf8_lossy(&buffer[..bytes_read]));
+                let message = String::from_utf8_lossy(&buffer[..bytes_read]);
+                println!("{}", message);
                 stream.write_all(b"Message received")?;
             }
             Err(e) if e.kind() == ErrorKind::ConnectionReset => break, // Handle client disconnection
