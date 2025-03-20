@@ -4,6 +4,6 @@ A communication server
 
 # Next steps
 
-- add username for multi-client connections
-- Multi platform????
+- Test cross device communication
+- Add command passthrough
 
